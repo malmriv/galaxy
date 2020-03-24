@@ -2,6 +2,7 @@
 I have used some of the code I wrote for my simulation of the Solar System, which can be visited [here](https://github.com/malmriv/solarsystem). Nevertheless, this is a more ambitious project. I intend to simulate a galaxy and study some of its main properties, adding new capabilities like:
 
  - Elastic (and possibly ineslastic) collisions.
+ - Black hole absorption.
  - A neighbour list for improved performance.
  - An option to switch relativistic effects on and off (to compare results).
 
