@@ -72,15 +72,13 @@ c       Evaluate accelerations to set initial conditions
           end do
         end do
 
-c       Compute initial Verlet list (only every few steps)
+c       Compute initial Verlet list
         vlist = 0
         do j=1,n_bodies
         do k=1,n_bodies
           if(j.eq.k) cycle
           dist = (x(j,i)-x(k,i))**2.0+(y(j,i)-y(k,i))**2.0
-        if(dist .lt. vradius**2.0) then
-          vlist(j,k) = k
-        end if
+          if(dist .lt. vradius**2.0) vlist(j,k) = k
         end do
         call quicksort(vlist(j,1:n_bodies),1,n_bodies)
         call reverse(vlist(j,1:n_bodies),n_bodies)
@@ -89,14 +87,14 @@ c       Compute initial Verlet list (only every few steps)
 c       Save the initial time
         write(70,*) t
 
-c       Iterative process computing motion magnitudes for each step
-        do i=2,N !Step number. Indexes mean the same as before.
+c       Iterative process starts here!
+        do i=2,N
 
-          do j=1,n_bodies
-c           Compute positions
-            x(j,i) = calc_x(h,x(j,i-1),vx(j,i-1),ax(j,i-1))
-            y(j,i) = calc_x(h,y(j,i-1),vy(j,i-1),ay(j,i-1))
-          end do
+        do j=1,n_bodies
+c         Compute positions
+          x(j,i) = calc_x(h,x(j,i-1),vx(j,i-1),ax(j,i-1))
+          y(j,i) = calc_x(h,y(j,i-1),vy(j,i-1),ay(j,i-1))
+        end do
 
 c       Compute Verlet list ever 5 steps, best to determine later
           if(modulo(i,5) .eq. 0) then
@@ -114,16 +112,15 @@ c       Compute Verlet list ever 5 steps, best to determine later
             end do
           end if
 
-
+c         Compute accelerations
           do j=1,n_bodies
             if(nonzero(vlist(j,1:n_bodies),n_bodies) .eq. 0) cycle
-c           Compute accelerations
             do k=1,nonzero(vlist(j,1:n_bodies),n_bodies)
-            l = vlist(j,k)
-            ax(j,i) = ax(j,i) + calc_a(m(l),x(j,i),x(l,i),
-     &      y(j,i),y(l,i))
-            ay(j,i) = ay(j,i) + calc_a(m(l),y(j,i),y(l,i),
-     &      x(j,i),x(l,i))
+              l = vlist(j,k)
+              ax(j,i) = ax(j,i) + calc_a(m(l),x(j,i),x(l,i),
+     &        y(j,i),y(l,i))
+              ay(j,i) = ay(j,i) + calc_a(m(l),y(j,i),y(l,i),
+     &        x(j,i),x(l,i))
             end do
           end do
 
