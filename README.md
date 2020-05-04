@@ -5,6 +5,14 @@ I have used some of the code I wrote for my simulation of the Solar System, whic
   * [x] Black hole absorption (with star replacement).
   * [x] A Verlet list to bring down time execution time.
  
-And maybe some other things, if I think of something interesting before I run out of time. My reference galaxy has been the Milky Way. I have matched the relevant parameters of the simulation to real astronomic data. The mass distribution, central black hole's mass, and the radius of the galaxy approximately match those of the real Milky Way. My analysis does not reach further than that, though. This simulation, although challenging for me, does not take into consideration most variables necessary for an extensive study of the Milky Way.
+And maybe some other things, if I think of something interesting before I run out of time. The available R scripts are:
+
+  * animate.R: generates frames to make an animation of the galaxy as it evolves over time. I wrote about the process of creating scientific animations [here](https://malmriv.github.io/posts/2020/04/make-animations-with-R/).
+  * init_generator.R: generates a dataset that describes the initial state of the system: positions, velocities, masses, effective radii, etc.
+  * plot_vel_curve.R: generates frames to make an animation of the rotational curve of the galaxy. The system can be said to be in a stable state when the rotational curve maintaints the same profile between iterations.
+  * radial_mass.R: generates a single graph that shows how the mass is radially distributed over time. I still need to add a gradient bar that indicates which mass corresponds to which color, as a reference.
+  * simple_collision.R: this is not immediately relevant to the simulation itself. It is similar to init_generator.R, except it generates an initial state with N bodies laying in a circumference, with light perturbations both in position and velocities (so that the system is not entirely symmetric). I wrote this to check if my collision algorithm was working as expected. (It wasn't at first, so this ended up actually being useful). There is a figure in the paper where you can see the toy simulation.
+
+My reference galaxy has been the Milky Way. I have matched the relevant parameters of the simulation to real astronomic data. The mass distribution, central black hole's mass, and the radius of the galaxy approximately match those of the real Milky Way. My analysis does not reach further than that, though. This simulation, although challenging for me, does not take into consideration most variables necessary for an extensive study of the Milky Way. 
 
 I will update this readme file once the project is finished, and the results of the simulation will be condensed into a short paper.
