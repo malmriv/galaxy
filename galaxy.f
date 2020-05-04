@@ -105,24 +105,24 @@ c   IMPORTANT. The actual program starts here.
         program galaxy
           use randomnumber
           implicit none
-          real*8, dimension (:,:), allocatable :: x,y,vx,vy,ax,ay,KE,UE
-          real*8, dimension (:,:), allocatable :: vxcol, vycol
+          real*8, dimension (:,:), allocatable :: x,y,ax,ay,KE,UE
+          real*8, dimension (:,:), allocatable :: vx,vxcol,vy,vycol
           real*16, dimension (:), allocatable :: m, R
           integer, dimension(:,:), allocatable :: vlist
           real*8 h, t, tmax, pos1, pos2, dp, dist, vradius
-          real*8 start, finish
-          real*8 calc_x, calc_v, calc_a, aux, coll, total_KE, total_UE
+          real*8 calc_x, calc_v, calc_a, coll, total_KE, total_UE
           integer i, j, k, l, n_bodies, N, nonzero, randseed(1:8)
+          real*8 start, finish, inertia
           integer*8 seed1byte
 
           call cpu_time(start)
           n_bodies = 1517
-          N = 10000
+          N = 200
           tmax = 10.d0 !1 unit ~ current age of the sun
           h = tmax/float(N)
           vradius = 0.4 !In normalised distance units
 
-c       Allocate memory for each vector
+c   Allocate memory for each vector
           allocate(x(1:n_bodies,1:N),y(1:n_bodies,1:N))
           allocate(vx(1:n_bodies,1:N),vy(1:n_bodies,1:N))
           allocate(vxcol(1:n_bodies,1:N),vycol(1:n_bodies,1:N))
@@ -131,32 +131,25 @@ c       Allocate memory for each vector
           allocate(m(1:n_bodies),R(1:n_bodies))
           allocate(vlist(1:n_bodies,1:n_bodies))
 
-c       Initialize the vectors.
-          R = 0.d0
+c   Initialize as zero the vectors whose definition implies addition
           UE = 0.d0
           KE = 0.d0
           t = 0.d0
-          m = 0.d0
-          x = 0.d0
-          y = 0.d0
-          vx = 0.d0
-          vy = 0.d0
           ax = 0.d0
           ay = 0.d0
-          dist = 0.d0
 
-c       Data is generated and normalised by an R script.
+c   Data is generated and normalised by an R script.
           open(100,file="./dataset.txt",status='old')
           do i=1,n_bodies
             read(100,*) m(i), x(i,1), y(i,1), vx(i,1), vy(i,1), R(i)
           end do
           close(100)
 
-c       We open different files for different magnitudes. This may seem
-c       inefficient for a small number of bodies, but a simulation with
-c       hundreds of bodies, each one evaluated thousands of times,
-c       would quickly yield a very unmanageable .txt file if we were to
-c       store everything in one go.
+c   We open different files for different magnitudes. This may seem
+c   inefficient for a small number of bodies, but a simulation with
+c   hundreds of bodies, each one evaluated thousands of times,
+c   would quickly yield a very unmanageable .txt file if we were to
+c   store everything in one go.
           call system("mkdir -p ./results")
           open(10,file="./results/x.txt")
           open(20,file="./results/y.txt")
@@ -167,8 +160,9 @@ c       store everything in one go.
           open(70,file="./results/t.txt")
           open(80,file="./results/energy.txt")
           open(110,file="./results/blackholemass.txt")
+          open(120,file="./results/inertia.txt")
 
-c       Evaluate accelerations to set initial conditions
+c   Evaluate accelerations to set initial conditions
           i = 1
           do j=1,n_bodies !j = body whose motion is being computed
             do k=1,n_bodies !k = its interactions with the k-th body
@@ -179,7 +173,7 @@ c       Evaluate accelerations to set initial conditions
             end do
           end do
 
-c       Compute initial Verlet list (only every few steps)
+c   Compute initial Verlet list (only every few steps)
           vlist = 0
           do j=1,n_bodies
             do k=1,n_bodies
@@ -194,23 +188,23 @@ c       Compute initial Verlet list (only every few steps)
             vlist(j,1) = 1
           end do
 
-c       Save the initial time
+c   Save the initial time
           write(70,*) t
 
-c       Initiate random number generator using current time as seed
+c   Initiate random number generator using current time as seed
           call date_and_time(values=randseed)
           call dran_ini(abs(product(randseed)))
 
-c       Iterative process computing motion magnitudes for each step
+c   Iterative process computing motion magnitudes for each step
           do i=2,N !Step number. Indexes mean the same as before.
 
             do j=1,n_bodies
-c           Compute positions
+c   Compute positions
               x(j,i) = calc_x(h,x(j,i-1),vx(j,i-1),ax(j,i-1))
               y(j,i) = calc_x(h,y(j,i-1),vy(j,i-1),ay(j,i-1))
             end do
 
-c       Compute Verlet list ever 4 steps, best to determine later
+c   Compute Verlet list ever 4 steps, best to determine later
             if(modulo(i,4) .eq. 0) then
               vlist = 0
               do j=1,n_bodies
@@ -254,13 +248,13 @@ c   Compute velocities in case a collision has taken place.
 c   Define the necessary parameters to check for collisions
             do j=1,(n_bodies-1)
               do k=(j+1),n_bodies
-                aux = dsqrt((x(j,i)-x(k,i))**2.0+(y(j,i)-y(k,i))**2.0)
+                dist = dsqrt((x(j,i)-x(k,i))**2.0+(y(j,i)-y(k,i))**2.0)
                 coll = dp(vx(k,i)-vx(j,i),vy(k,i)-vy(j,i),x(k,i)-x(j,i),
      &          y(k,i)-y(j,i))
 
 c   The central black hole swallows anything that comes too close and
 c   a new body with fitting magnitudes is generated.
-                if(aux .le. (R(k)+R(j)) .and. j.eq.1 .or. k.eq.1) then
+                if(dist .le. (R(k)+R(j)) .and. j.eq.1 .or. k.eq.1) then
                   l = k
                   if(m(j) .lt. m(k)) l = j
                   m(1) = m(1) + m(l)
@@ -273,7 +267,7 @@ c   a new body with fitting magnitudes is generated.
                   write(110,*) t,m(1)
                 end if
 
-                if((aux .le. (R(k)+R(j))) .and. (coll .le. 0.d0)) then
+                if((dist .le. (R(k)+R(j))) .and. (coll .le. 0.d0)) then
 c   This horrible mess computes after-collision velocities. It looks
 c   awful but I promise it does what it needs to do and it works.
 
@@ -290,7 +284,7 @@ c   First body's velocity
      &          / ((x(j,i)-x(k,i))**2.0+(y(j,i)-y(k,i))**2.0)
      &          * (y(j,i)-y(k,i))
 
-c             Second body's velocity
+c   Second body's velocity
                 vxcol(k,i) = vx(k,i) -2.*m(j)/(m(j)+m(k))
      &          * (dp(vx(k,i)-vx(j,i),vy(k,i)-vy(j,i),
      &          x(k,i)-x(j,i),y(k,i)-y(j,i))
@@ -306,31 +300,38 @@ c             Second body's velocity
               end do
             end do
 
-c         Set new velocities
+c   Set new velocities
             vx = vxcol
             vy = vycol
 
-c         Compute kinetic and potential energies
+c   Compute kinetic and potential energies
             do j = 1,n_bodies
               KE(j,i) = 0.5d0*m(j)*(vx(j,i)**2.d0+vy(j,i)**2.d0)
             end do
 
             do j=1,n_bodies
               do k=j+1,n_bodies
-                aux = dsqrt((x(j,i)-x(k,i))**2.0+(y(j,i)-y(k,i))**2.0)
-                UE(j,i) = UE(j,i) - (m(j)*m(k))/aux
+                dist = dsqrt((x(j,i)-x(k,i))**2.0+(y(j,i)-y(k,i))**2.0)
+                UE(j,i) = UE(j,i) - (m(j)*m(k))/dist
               end do
             end do
 
+c   Compute inertia for current state
+            inertia = 0
+            do j = 1,n_bodies
+              inertia = inertia+(x(j,i)**2.d0+y(j,i)**2.d0)*m(j)
+            end do
+            write(120,*) inertia
 
-c         Update time, save time, and save blach hole mass
+
+c   Update time, save time, and save black hole mass
             t=t+h
             write(70,*) t
-            if(modulo(i,N).eq.100) write(*,*) "Completed %:",i/N
+            if(modulo(i,N).eq.10) write(*,*) "Completed %:",i/N
           end do
 
-c       Save kinematic computations. Remember:
-c       i-th row = i-th iteration, j-th column = j-th object
+c   Save kinematic computations. Remember:
+c   i-th row = i-th iteration, j-th column = j-th object
           do i=1,N
             write(10,*) (x(j,i),j=1,n_bodies)
             write(20,*) (y(j,i),j=1,n_bodies)
@@ -340,7 +341,7 @@ c       i-th row = i-th iteration, j-th column = j-th object
             write(60,*) (ay(j,i),j=1,n_bodies)
           end do
 
-c         Save energy computations.
+c   Save energy computations.
           do i=2,N
             total_KE = 0.d0
             total_UE = 0.d0
@@ -351,19 +352,19 @@ c         Save energy computations.
             write(80,*) i,total_KE,total_UE
           end do
 
-c       Close every file
-          do i=10,110,10
+c   Close every file
+          do i=10,120,10
             close(i)
           end do
 
-c         Measure runtime and finish program
+c   Measure runtime and finish program
           call cpu_time(finish)
           write(*,*) "Total runtime (in seconds):",finish-start
           write(*,*) "Data saved in ./results/"
         end program galaxy
 
-c     These functions evaluate angular position, velocity and accelera-
-c     tion. Defining them here will make this program more adaptable.
+c   These functions evaluate angular position, velocity and accelera-
+c   tion. Defining them here will make this program more adaptable.
 
         function calc_x(h,x,v,a) result(ans)
           implicit none
@@ -399,7 +400,7 @@ c     Dot product function
 c     This is a quicksort algorithm.
         recursive subroutine quicksort(a, first, last)
           implicit none
-          integer a(*), first, last, i, j, aux
+          integer a(*), first, last, i, j
           real*8 x, t
 
           x = a( (first+last) / 2 )
@@ -432,6 +433,7 @@ c     to put the non-zero elements of the Verlet list first.
             a(length-i+1) = aux
           end do
         end subroutine reverse
+
 c     This function returns the number of non-zero elements in an integer
 c     array. It's used to retrieve relevant information from the Verlet list.
         function nonzero(a,length) result(count)
