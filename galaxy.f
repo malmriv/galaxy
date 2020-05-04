@@ -258,8 +258,8 @@ c   a new body with fitting magnitudes is generated.
                   l = k
                   if(m(j) .lt. m(k)) l = j
                   m(1) = m(1) + m(l)
-                  x(l,i) = (-1.0)**i_dran(seed1byte)*dran_u()*3.05 !Galactic radius
-                  y(l,i) = (-1.0)**i_dran(seed1byte)*dran_u()*3.05
+                  x(l,i) = (-1.0)**i_dran(seed1byte)*dran_u()*sqrt(4.5) !Galactic radius
+                  y(l,i) = (-1.0)**i_dran(seed1byte)*dran_u()*sqrt(4.5)
                   vx(l,i) = y(l,i)/(x(l,i)**2.d0+y(l,i)**2.d0)
                   vy(l,i) = -x(l,i)/(x(l,i)**2.d0+y(l,i)**2.d0)
                   m(l) = 2.621810E-7+(-1)**i_dran(seed1byte)*
