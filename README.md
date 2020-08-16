@@ -1,6 +1,6 @@
 # galaxy
 
-**Note:** the finished report, which came together pretty nicely, can be found [here](https://github.com/malmriv/galaxy/blob/master/almagro2020.pdf). The notes that follow are not intended to be an explanation of the technicalities behind this work; they are merely checkpoints and clarifications I made for myself.
+**Note:** the finished report, which came together pretty nicely, can be found [here](https://github.com/malmriv/galaxy/blob/master/almagro2020.pdf). The notes that follow are not intended to be an explanation of the technicalities behind this work; they are merely checkpoints and clarifications I made for myself. A better introduction to symplectic integrators, Verlet's method and some considerations regarding molecular dynamics simulations can be found in my report, which should be understandable by itself. 
 ****
 I have used some of the code I wrote for my simulation of the Solar System, which can be visited [here](https://github.com/malmriv/solarsystem). Nevertheless, this is a more ambitious project. I intend to simulate a galaxy and study some of its main properties. I'm also adding new features like:
 
